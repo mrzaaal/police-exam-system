@@ -1,0 +1,108 @@
+/**
+ * css/accessibility.css
+ * Berisi gaya untuk fitur aksesibilitas seperti mode kontras tinggi.
+ */
+
+/* ============================================= */
+/* ===== MODE KONTRAS TINGGI (HIGH CONTRAST) ===== */
+/* ============================================= */
+
+body.high-contrast {
+    background-color: #000000 !important;
+    color: #FFFFFF !important;
+}
+
+/* Ubah warna latar belakang elemen utama */
+.high-contrast #login-page .bg-white,
+.high-contrast #exam-page .bg-white,
+.high-contrast #admin-page .bg-white,
+.high-contrast .modal-content, /* Ganti dengan class modal Anda jika berbeda */
+.high-contrast #question-modal .bg-white,
+.high-contrast #result-details-modal .bg-white,
+.high-contrast #schedule-modal .bg-white {
+    background-color: #121212 !important;
+    border: 1px solid #FFFFFF;
+}
+
+/* Ubah warna teks dan link */
+.high-contrast h1, .high-contrast h2, .high-contrast h3,
+.high-contrast p, .high-contrast label, .high-contrast span,
+.high-contrast th, .high-contrast td,
+.high-contrast .text-gray-800, .high-contrast .text-gray-700, .high-contrast .text-gray-500 {
+    color: #FFFFFF !important;
+}
+
+.high-contrast a, .high-contrast .action-btn.view {
+    color: #FFFF00 !important; /* Kuning untuk link agar menonjol */
+}
+
+/* Ubah warna input, textarea, dan select */
+.high-contrast input[type="text"],
+.high-contrast input[type="password"],
+.high-contrast input[type="number"],
+.high-contrast input[type="datetime-local"],
+.high-contrast textarea,
+.high-contrast select {
+    background-color: #333333 !important;
+    color: #FFFFFF !important;
+    border: 1px solid #FFFFFF !important;
+}
+
+/* Ubah warna tombol */
+.high-contrast button, .high-contrast a.bg-green-600 {
+    background-color: #000000 !important;
+    color: #FFFF00 !important;
+    border: 2px solid #FFFF00 !important;
+}
+.high-contrast button:hover, .high-contrast a.bg-green-600:hover {
+    background-color: #FFFF00 !important;
+    color: #000000 !important;
+}
+
+/* Penyesuaian khusus */
+.high-contrast .option-label {
+    border-color: #FFFFFF !important;
+}
+.high-contrast .option-label:hover {
+    background-color: #333333 !important;
+}
+.high-contrast .option-input:checked ~ .option-label {
+    background-color: #333333 !important;
+    border-color: #FFFF00 !important;
+}
+.high-contrast .nav-btn {
+    background-color: #333333 !important;
+    border-color: #FFFFFF !important;
+    color: #FFFFFF !important;
+}
+.high-contrast .nav-btn.answered {
+    background-color: #005a00 !important; /* Hijau tua */
+    border-color: #FFFFFF !important;
+}
+.high-contrast .nav-btn.flagged {
+    background-color: #8B4513 !important; /* Coklat tua */
+     border-color: #FFFFFF !important;
+}
+.high-contrast .nav-btn.active {
+    background-color: #00008B !important; /* Biru tua */
+    border: 2px solid #FFFF00 !important;
+}
+
+/* ============================================= */
+/* ===== PENYESUAIAN UKURAN FONT ===== */
+/* ============================================= */
+
+/* Ukuran font akan diatur melalui JavaScript dengan mengubah font-size pada #question-container */
+#question-container.font-size-large .question-text {
+    font-size: 1.25rem; /* 20px */
+}
+#question-container.font-size-large .option-label {
+    font-size: 1.125rem; /* 18px */
+}
+
+#question-container.font-size-xlarge .question-text {
+    font-size: 1.5rem; /* 24px */
+}
+#question-container.font-size-xlarge .option-label {
+    font-size: 1.25rem; /* 20px */
+}

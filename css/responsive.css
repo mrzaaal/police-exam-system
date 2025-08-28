@@ -1,0 +1,107 @@
+/* css/responsive.css */
+
+/* Untuk Tablet dan layar yang lebih kecil (di bawah 1024px) */
+@media (max-width: 1023px) {
+    /* Sembunyikan navigasi soal di samping pada halaman ujian */
+    #exam-page aside {
+        display: none;
+    }
+
+    /* Gunakan lebar penuh untuk kontainer soal */
+    #exam-page .w-full.lg\:w-3\/4 {
+        width: 100%;
+    }
+    
+    /* Ubah grid kartu statistik admin menjadi 2 kolom */
+    #admin-page .grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+/* Untuk Ponsel (di bawah 768px) */
+@media (max-width: 767px) {
+    /* Kurangi padding pada halaman login */
+    #login-page .p-8 {
+        padding: 1.5rem; /* 24px */
+    }
+
+    /* Ubah tata letak header ujian */
+    #exam-page header {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 1rem;
+    }
+
+    #exam-page header h1 {
+        margin-bottom: 0.75rem;
+    }
+
+    #exam-page header .flex.items-center {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    /* Kurangi padding pada konten utama ujian */
+    #exam-page main {
+        padding: 1rem;
+        flex-direction: column;
+    }
+    
+    #exam-page main .p-6.md\:p-8 {
+        padding: 1rem;
+    }
+
+    /* Kurangi ukuran font soal dan pilihan */
+    .question-text {
+        font-size: 1rem; /* 16px */
+    }
+
+    .option-label {
+        font-size: 0.875rem; /* 14px */
+        padding: 0.75rem 0.75rem 0.75rem 3rem;
+    }
+
+    .checkmark {
+        height: 20px;
+        width: 20px;
+        left: 0.75rem;
+    }
+    
+    .checkmark:after {
+        left: 6px;
+        top: 2px;
+        width: 5px;
+        height: 10px;
+    }
+
+    /* Ubah tata letak tombol navigasi soal */
+    #exam-page .flex.justify-between.items-center {
+        flex-direction: column;
+    }
+
+    #exam-page #prev-btn, #exam-page #next-btn {
+        width: 100%;
+    }
+
+    #exam-page #next-btn {
+        margin-top: 0.75rem;
+    }
+
+    #exam-page .text-sm.text-gray-500 {
+        margin-top: 1rem;
+        order: -1; /* Pindahkan ke atas tombol */
+    }
+
+    /* Ubah grid kartu statistik admin menjadi 1 kolom */
+    #admin-page .grid {
+        grid-template-columns: repeat(1, minmax(0, 1fr));
+    }
+
+    /* Atur agar tabel admin bisa di-scroll secara horizontal */
+    #admin-page .overflow-x-auto {
+        display: block;
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+}
