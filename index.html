@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Meta Tag Content Security Policy (Diperbaiki) -->
+    <meta http-equiv="Content-Security-Policy" 
+          content="default-src 'self'; 
+                   script-src 'self' https://cdn.jsdelivr.net https://cdn.tailwindcss.com 'unsafe-inline'; 
+                   style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; 
+                   font-src 'self' https://fonts.gstatic.com; 
+                   img-src 'self' data:; 
+                   connect-src 'self';">
+
+    <title>Sistem Ujian Kepolisian</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/admin.css">
+    <link rel="stylesheet" href="css/responsive.css">
+    <link rel="stylesheet" href="css/accessibility.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // Konfigurasi Tailwind (diizinkan oleh 'unsafe-inline' di CSP)
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-100 font-sans">
+
+    <!-- Container Utama -->
+    <div id="app-container" class="min-h-screen flex flex-col">
+
+        <!-- Halaman Login -->
+        <div id="login-page" class="flex-grow flex items-center justify-center p-4">
+            <div class="w-full max-w-md bg-white rounded-xl shadow-lg p-8">
+                <div class="text-center mb-8">
+                    <h1 class="text-3xl font-bold text-gray-800">Sistem Ujian Online</h1>
+                    <p class="text-gray-500 mt-2">Masuk untuk memulai sesi ujian Anda.</p>
+                </div>
+                <form id="login-form">
+                    <div class="mb-4">
+                        <label for="username" class="block text-sm font-medium text-gray-700 mb-2">Username</label>
+                        <input type="text" id="username" name="username" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Masukkan NIP/Username">
+                    </div>
+                    <div class="mb-6">
+                        <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                        <input type="password" id="password" name="password" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Masukkan Password">
+                    </div>
+                    <button type="submit" class="w-full bg-blue-600 text-white font-semibold py-3 rounded-lg hover:bg-blue-700 transition duration-300">Masuk</button>
+                    <div id="login-error" class="mt-4 text-center text-red-500 text-sm"></div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Halaman Pra-Ujian -->
+        <div id="pre-exam-page" class="hidden flex-grow flex items-center justify-center p-4">
+            <div class="w-full max-w-2xl bg-white rounded-xl shadow-lg p-8 text-center">
+                <h1 class="text-3xl font-bold text-gray-800 mb-4">Instruksi Ujian</h1>
+                <div class="text-left space-y-3 text-gray-600 mb-8">
+                    <p>1. Ujian akan berjalan dalam mode layar penuh (fullscreen) untuk menjaga fokus.</p>
+                    <p>2. Pastikan koneksi internet Anda stabil selama ujian berlangsung.</p>
+                    <p>3. Dilarang keluar dari mode layar penuh, berpindah tab, atau membuka aplikasi lain. Tindakan tersebut akan dianggap sebagai pelanggaran.</p>
+                    <p>4. Dilarang melakukan klik kanan, copy, paste, atau print screen selama ujian.</p>
+                    <p>5. Waktu akan mulai berjalan saat Anda menekan tombol "Mulai Ujian".</p>
+                </div>
+                <button id="start-fullscreen-exam-btn" class="w-full max-w-xs mx-auto bg-blue-600 text-white font-semibold py-3 rounded-lg hover:bg-blue-700 transition duration-300">
+                    Mulai Ujian
+                </button>
+            </div>
+        </div>
+
+        <!-- Halaman Ujian -->
+        <div id="exam-page" class="hidden flex-grow flex flex-col">
+            <header class="bg-white shadow-md p-4 flex justify-between items-center flex-wrap gap-4">
+                <h1 class="text-xl font-bold text-gray-800">Ujian Kompetensi Dasar</h1>
+                <div id="accessibility-controls" class="flex items-center space-x-6">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-sm font-medium">Ukuran Teks:</span>
+                        <button id="font-decrease-btn" class="font-bold text-lg w-8 h-8 bg-gray-200 rounded-full">-</button>
+                        <button id="font-increase-btn" class="font-bold text-lg w-8 h-8 bg-gray-200 rounded-full">+</button>
+                    </div>
+                    <div class="flex items-center">
+                        <label for="high-contrast-toggle" class="text-sm font-medium mr-2">Kontras Tinggi</label>
+                        <button id="high-contrast-toggle" role="switch" aria-checked="false" class="relative inline-flex h-6 w-11 items-center rounded-full bg-gray-200">
+                            <span class="inline-block h-4 w-4 transform rounded-full bg-white transition"></span>
+                        </button>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="text-lg font-semibold text-red-500 bg-red-100 px-4 py-2 rounded-lg">
+                        <span id="timer">00:00:00</span>
+                    </div>
+                    <button id="finish-exam-btn" class="bg-red-600 text-white font-semibold px-6 py-2 rounded-lg hover:bg-red-700 transition">Selesai</button>
+                </div>
+            </header>
+            <main class="flex-grow flex p-4 md:p-8 overflow-hidden">
+                <div class="w-full lg:w-3/4 bg-white rounded-xl shadow-lg p-6 md:p-8 overflow-y-auto">
+                    <div id="question-container"></div>
+                    <div class="mt-8 flex justify-between items-center">
+                        <button id="prev-btn" class="bg-gray-200 text-gray-700 font-semibold px-6 py-2 rounded-lg hover:bg-gray-300 transition">Sebelumnya</button>
+                        <div class="flex items-center">
+                            <input type="checkbox" id="flag-question-checkbox" class="h-4 w-4 text-yellow-500 border-gray-300 rounded focus:ring-yellow-400">
+                            <label for="flag-question-checkbox" class="ml-2 text-sm font-medium text-gray-700">Tandai Ragu-ragu</label>
+                        </div>
+                        <button id="next-btn" class="bg-blue-600 text-white font-semibold px-6 py-2 rounded-lg hover:bg-blue-700 transition">Berikutnya</button>
+                    </div>
+                    <div class="text-center text-sm text-gray-500 mt-4">Soal <span id="current-question-number">1</span> dari <span id="total-questions">0</span></div>
+                </div>
+                <aside class="hidden lg:block w-1/4 ml-8 bg-white rounded-xl shadow-lg p-6 overflow-y-auto">
+                    <h3 class="font-bold text-lg mb-4">Navigasi Soal</h3>
+                    <div id="question-navigation" class="grid grid-cols-5 gap-2"></div>
+                </aside>
+            </main>
+        </div>
+
+        <!-- Halaman Ujian Selesai -->
+        <div id="exam-finished-page" class="hidden flex-grow flex items-center justify-center p-4">
+            <div class="w-full max-w-lg bg-white rounded-xl shadow-lg p-8 text-center">
+                <h1 class="text-3xl font-bold text-green-600 mb-4">Ujian Telah Selesai</h1>
+                <p class="text-gray-600 mb-8">Jawaban Anda telah berhasil disimpan. Hasil akan diumumkan sesuai jadwal. Silakan logout dan periksa kembali nanti.</p>
+                <div class="flex justify-center space-x-4">
+                    <button id="go-to-profile-btn-1" class="bg-blue-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-blue-700 transition">Ubah Password</button>
+                    <button id="logout-after-exam-btn" class="bg-gray-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-gray-700 transition">Logout</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Halaman Lihat Hasil (Daftar Hasil) -->
+        <div id="view-results-page" class="hidden flex-grow flex flex-col">
+            <header class="bg-white shadow-md p-4 flex justify-between items-center">
+                <h1 class="text-xl font-bold text-gray-800">Riwayat Hasil Ujian Anda</h1>
+                <div>
+                    <button id="go-to-profile-btn-2" class="bg-blue-600 text-white font-semibold px-6 py-2 rounded-lg hover:bg-blue-700 transition">Ubah Password</button>
+                    <button id="logout-from-results-btn" class="ml-4 bg-gray-600 text-white font-semibold px-6 py-2 rounded-lg hover:bg-gray-700 transition">Logout</button>
+                </div>
+            </header>
+            <main class="flex-grow p-8">
+                <div id="results-list-container" class="w-full max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-8"></div>
+            </main>
+        </div>
+
+        <!-- Halaman Laporan Rinci -->
+        <div id="detailed-report-page" class="hidden flex-grow flex flex-col">
+            <header class="bg-white shadow-md p-4 flex justify-between items-center">
+                <h1 class="text-xl font-bold text-gray-800">Rincian Hasil Ujian</h1>
+                <button id="back-to-results-list-btn" class="bg-gray-200 text-gray-700 font-semibold px-6 py-2 rounded-lg hover:bg-gray-300 transition">Kembali ke Daftar Hasil</button>
+            </header>
+            <main class="flex-grow p-8">
+                <div id="detailed-report-container" class="w-full max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-8"></div>
+            </main>
+        </div>
+
+        <!-- Halaman Profil Peserta -->
+        <div id="profile-page" class="hidden flex-grow flex flex-col">
+            <header class="bg-white shadow-md p-4 flex justify-between items-center">
+                <h1 class="text-xl font-bold text-gray-800">Profil Saya</h1>
+                <button id="back-to-dashboard-btn" class="bg-gray-200 text-gray-700 font-semibold px-6 py-2 rounded-lg hover:bg-gray-300 transition">Kembali</button>
+            </header>
+            <main class="flex-grow p-8 flex items-center justify-center">
+                <div class="w-full max-w-md bg-white rounded-xl shadow-lg p-8">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6">Ubah Password</h2>
+                    <form id="change-password-form">
+                        <div class="mb-4">
+                            <label for="current_password" class="block text-sm font-medium text-gray-700 mb-2">Password Saat Ini</label>
+                            <input type="password" id="current_password" name="current_password" required class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <div class="mb-4">
+                            <label for="new_password" class="block text-sm font-medium text-gray-700 mb-2">Password Baru</label>
+                            <input type="password" id="new_password" name="new_password" required class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <div class="mb-6">
+                            <label for="confirm_password" class="block text-sm font-medium text-gray-700 mb-2">Konfirmasi Password Baru</label>
+                            <input type="password" id="confirm_password" name="confirm_password" required class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <button type="submit" class="w-full bg-blue-600 text-white font-semibold py-3 rounded-lg hover:bg-blue-700 transition">Simpan Perubahan</button>
+                        <div id="change-password-status" class="mt-4 text-center text-sm"></div>
+                    </form>
+                </div>
+            </main>
+        </div>
+
+        <!-- Halaman Admin -->
+        <div id="admin-page" class="hidden flex-grow flex flex-col">
+            <header class="bg-white shadow-md p-4 flex justify-between items-center">
+                <h1 class="text-xl font-bold text-gray-800">Dashboard Admin</h1>
+                <button id="logout-btn" class="bg-gray-600 text-white font-semibold px-6 py-2 rounded-lg hover:bg-gray-700 transition">Logout</button>
+            </header>
+            <main class="flex-grow p-8">
+                <div class="mb-6 border-b border-gray-200">
+                    <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+                        <a href="#hasil-ujian" id="tab-hasil" class="tab-btn border-blue-500 text-blue-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Hasil Ujian</a>
+                        <a href="#manajemen-peserta" id="tab-peserta" class="tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Manajemen Peserta</a>
+                        <a href="#manajemen-jadwal" id="tab-jadwal" class="tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Manajemen Jadwal</a>
+                        <a href="#paket-soal" id="tab-paket-soal" class="tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Manajemen Paket Soal</a>
+                        <a href="#bank-soal" id="tab-bank-soal" class="tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Bank Soal</a>
+                        <a href="#penilaian-esai" id="tab-penilaian" class="tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Penilaian Esai</a>
+                        <a href="#pengawasan" id="tab-pengawasan" class="tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Pengawasan Live</a>
+                        <a href="#audit-trail" id="tab-audit" class="tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Audit Trail</a>
+                    </nav>
+                </div>
+                <div id="content-hasil-ujian" class="tab-content">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                        <div class="bg-white p-6 rounded-xl shadow-lg flex items-center"><div class="bg-blue-100 p-3 rounded-full"><svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M15 21a6 6 0 00-9-5.197m0 0A5.975 5.975 0 0012 13a5.975 5.975 0 00-3-1.197z"></path></svg></div><div class="ml-4"><p class="text-sm text-gray-500">Total Peserta</p><p id="total-participants" class="text-2xl font-bold">0</p></div></div>
+                        <div class="bg-white p-6 rounded-xl shadow-lg flex items-center"><div class="bg-green-100 p-3 rounded-full"><svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div><div class="ml-4"><p class="text-sm text-gray-500">Lulus</p><p id="passed-count" class="text-2xl font-bold">0</p></div></div>
+                        <div class="bg-white p-6 rounded-xl shadow-lg flex items-center"><div class="bg-red-100 p-3 rounded-full"><svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div><div class="ml-4"><p class="text-sm text-gray-500">Gagal</p><p id="failed-count" class="text-2xl font-bold">0</p></div></div>
+                        <div class="bg-white p-6 rounded-xl shadow-lg flex items-center"><div class="bg-yellow-100 p-3 rounded-full"><svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div><div class="ml-4"><p class="text-sm text-gray-500">Rata-rata Skor</p><p id="average-score" class="text-2xl font-bold">0</p></div></div>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8"><div class="bg-white rounded-xl shadow-lg p-6"><h3 class="text-lg font-semibold mb-4">Distribusi Skor Peserta</h3><div><canvas id="scoreDistributionChart"></canvas></div></div><div class="bg-white rounded-xl shadow-lg p-6 flex items-center justify-center text-gray-400"><p>Analitik Lain Akan Datang</p></div></div>
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <div class="flex justify-between items-center mb-4"><h2 class="text-xl font-bold">Hasil Ujian Peserta</h2><a href="api/export_results.php" id="export-btn" class="bg-green-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-green-700 transition">Ekspor ke Excel (CSV)</a></div>
+                        <div class="mb-4"><input type="text" id="search-results-input" placeholder="Cari berdasarkan username atau nama peserta..." class="w-full md:w-1/3 px-4 py-2 border border-gray-300 rounded-lg"></div>
+                        <div class="overflow-x-auto"><table class="w-full text-sm text-left text-gray-500"><thead class="text-xs text-gray-700 uppercase bg-gray-50"><tr><th scope="col" class="px-6 py-3">Nama Peserta</th><th scope="col" class="px-6 py-3">Skor</th><th scope="col" class="px-6 py-3">Percobaan Ke-</th><th scope="col" class="px-6 py-3">Status</th><th scope="col" class="px-6 py-3">Waktu Selesai</th><th scope="col" class="px-6 py-3">Aksi</th></tr></thead><tbody id="results-table-body"></tbody></table></div>
+                        <div id="results-pagination-controls" class="mt-4 flex justify-between items-center"></div>
+                    </div>
+                </div>
+                <div id="content-manajemen-peserta" class="tab-content hidden"><div class="bg-white rounded-xl shadow-lg p-6"><div class="flex justify-between items-center mb-4"><h2 class="text-xl font-bold">Daftar Peserta</h2><div class="flex space-x-2"><button id="add-user-btn" class="bg-blue-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-blue-700 transition">Tambah Peserta</button><button id="import-users-btn" class="bg-gray-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-gray-700 transition">Impor CSV</button><form id="import-users-form" class="hidden"><input type="file" id="import-users-input" name="users_csv" accept=".csv"></form></div></div><div class="mb-4"><input type="text" id="search-users-input" placeholder="Cari berdasarkan username atau nama..." class="w-full md:w-1/3 px-4 py-2 border border-gray-300 rounded-lg"></div><div id="import-users-status" class="mb-4"></div><div class="overflow-x-auto"><table class="w-full text-sm text-left text-gray-500"><thead class="text-xs text-gray-700 uppercase bg-gray-50"><tr><th scope="col" class="px-6 py-3">ID</th><th scope="col" class="px-6 py-3">Username</th><th scope="col" class="px-6 py-3">Nama Lengkap</th><th scope="col" class="px-6 py-3">Tanggal Daftar</th><th scope="col" class="px-6 py-3">Aksi</th></tr></thead><tbody id="users-table-body"></tbody></table></div><div id="users-pagination-controls" class="mt-4 flex justify-between items-center"></div></div></div>
+                <div id="content-manajemen-jadwal" class="tab-content hidden"><div class="bg-white rounded-xl shadow-lg p-6"><div class="flex justify-between items-center mb-4"><h2 class="text-xl font-bold">Daftar Jadwal Ujian</h2><button id="add-schedule-btn" class="bg-blue-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-blue-700 transition">Buat Jadwal Baru</button></div><div class="overflow-x-auto"><table class="w-full text-sm text-left text-gray-500"><thead class="text-xs text-gray-700 uppercase bg-gray-50"><tr><th scope="col" class="px-6 py-3">Judul</th><th scope="col" class="px-6 py-3">Waktu Mulai</th><th scope="col" class="px-6 py-3">Waktu Selesai</th><th scope="col" class="px-6 py-3">Durasi (Menit)</th><th scope="col" class="px-6 py-3">Jumlah Soal</th><th scope="col" class="px-6 py-3">Status</th><th scope="col" class="px-6 py-3">Hasil Dirilis</th><th scope="col" class="px-6 py-3">Analisis Butir Soal</th><th scope="col" class="px-6 py-3">Aksi</th></tr></thead><tbody id="schedules-table-body"></tbody></table></div></div></div>
+                <div id="content-paket-soal" class="tab-content hidden"><div class="bg-white rounded-xl shadow-lg p-6"><div class="flex justify-between items-center mb-4"><h2 class="text-xl font-bold">Daftar Paket Soal (Blueprint)</h2><button id="add-question-set-btn" class="bg-blue-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-blue-700 transition">Buat Paket Baru</button></div><div class="overflow-x-auto"><table class="w-full text-sm text-left text-gray-500"><thead class="text-xs text-gray-700 uppercase bg-gray-50"><tr><th scope="col" class="px-6 py-3">Nama Paket</th><th scope="col" class="px-6 py-3">Deskripsi</th><th scope="col" class="px-6 py-3">Jumlah Soal</th><th scope="col" class="px-6 py-3">Tanggal Dibuat</th><th scope="col" class="px-6 py-3">Aksi</th></tr></thead><tbody id="question-sets-table-body"></tbody></table></div></div></div>
+                <div id="content-bank-soal" class="tab-content hidden"><div class="bg-white rounded-xl shadow-lg p-6"><div class="flex justify-between items-center mb-4"><h2 class="text-xl font-bold">Manajemen Bank Soal</h2><div class="flex space-x-2"><button id="import-btn" class="bg-gray-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-gray-700 transition">Impor CSV</button><a href="api/export_questions.php" class="bg-green-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-green-700 transition">Ekspor CSV</a><button id="add-question-btn" class="bg-blue-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-blue-700 transition">Tambah Soal</button><form id="import-form" class="hidden"><input type="file" id="import-file-input" name="questions_csv" accept=".csv"></form></div></div><div class="mb-4"><input type="text" id="search-question-input" placeholder="Cari berdasarkan teks soal atau topik..." class="w-full md:w-1/3 px-4 py-2 border border-gray-300 rounded-lg"></div><div id="import-status" class="mb-4"></div><div class="overflow-x-auto"><table class="w-full text-sm text-left text-gray-500"><thead class="text-xs text-gray-700 uppercase bg-gray-50"><tr><th scope="col" class="px-6 py-3">ID</th><th scope="col" class="px-6 py-3">Tipe Soal</th><th scope="col" class="px-6 py-3">Teks Soal</th><th scope="col" class="px-6 py-3">Topik</th><th scope="col" class="px-6 py-3">Kesulitan</th><th scope="col" class="px-6 py-3">Status</th><th scope="col" class="px-6 py-3">Aksi</th></tr></thead><tbody id="questions-table-body"></tbody></table></div><div id="questions-pagination-controls" class="mt-4 flex justify-between items-center"></div></div></div>
+                <div id="content-penilaian-esai" class="tab-content hidden"><div class="bg-white rounded-xl shadow-lg p-6"><h2 class="text-xl font-bold mb-4">Jawaban Esai Menunggu Penilaian</h2><div id="grading-container" class="space-y-6"></div></div></div>
+                <div id="content-pengawasan" class="tab-content hidden"><div class="bg-white rounded-xl shadow-lg p-6"><div class="flex justify-between items-center mb-4"><h2 class="text-xl font-bold">Pengawasan Ujian Live</h2><div class="text-sm text-gray-500">Data diperbarui setiap 10 detik</div></div><div class="overflow-x-auto"><table class="w-full text-sm text-left text-gray-500"><thead class="text-xs text-gray-700 uppercase bg-gray-50"><tr><th scope="col" class="px-6 py-3">Username</th><th scope="col" class="px-6 py-3">Waktu Mulai</th><th scope="col" class="px-6 py-3">Update Terakhir</th><th scope="col" class="px-6 py-3">Progres</th><th scope="col" class="px-6 py-3">Tingkat Risiko</th><th scope="col" class="px-6 py-3">Aksi</th></tr></thead><tbody id="monitoring-table-body"></tbody></table></div></div></div>
+                <div id="content-audit-trail" class="tab-content hidden"><div class="bg-white rounded-xl shadow-lg p-6"><h2 class="text-xl font-bold mb-4">Log Aktivitas Sistem</h2><div class="overflow-x-auto"><table class="w-full text-sm text-left text-gray-500"><thead class="text-xs text-gray-700 uppercase bg-gray-50"><tr><th scope="col" class="px-6 py-3">Waktu</th><th scope="col" class="px-6 py-3">Pengguna</th><th scope="col" class="px-6 py-3">Aksi</th><th scope="col" class="px-6 py-3">Detail</th><th scope="col" class="px-6 py-3">Alamat IP</th></tr></thead><tbody id="audit-trail-table-body"></tbody></table></div></div></div>
+            </main>
+        </div>
+
+        <!-- Modals -->
+        <div id="generic-confirm-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50"><div class="bg-white rounded-lg shadow-xl p-8 max-w-sm w-full text-center"><h3 class="text-lg font-bold mb-4" id="generic-confirm-title">Konfirmasi</h3><p id="generic-confirm-body" class="text-gray-600 mb-6">Apakah Anda yakin?</p><div class="flex justify-center space-x-4"><button id="generic-confirm-cancel-btn" class="bg-gray-200 text-gray-700 font-semibold px-6 py-2 rounded-lg hover:bg-gray-300">Batal</button><button id="generic-confirm-ok-btn" class="bg-red-600 text-white font-semibold px-6 py-2 rounded-lg hover:bg-red-700">Yakin</button></div></div></div>
+        <div id="question-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-40 overflow-y-auto p-4"><div class="bg-white rounded-lg shadow-xl p-8 max-w-4xl w-full my-8"><h3 class="text-2xl font-bold mb-6" id="question-modal-title"></h3><form id="question-form"><div class="grid grid-cols-1 md:grid-cols-2 gap-6"><div><input type="hidden" id="question-id" name="id"><input type="hidden" id="image_url" name="image_url"><div class="mb-4"><label for="question_type" class="block text-sm font-medium text-gray-700 mb-2">Tipe Soal</label><select id="question_type" name="question_type" class="w-full px-4 py-2 border border-gray-300 rounded-lg"><option value="multiple-choice">Pilihan Ganda</option><option value="essay">Esai</option></select></div><div class="mb-4"><label for="question_text" class="block text-sm font-medium text-gray-700 mb-2">Teks Soal</label><textarea id="question_text" name="question_text" rows="5" required class="w-full px-4 py-2 border border-gray-300 rounded-lg" placeholder="Gunakan $...$ untuk rumus inline dan $$...$$ untuk display."></textarea></div><div class="mb-4"><label class="block text-sm font-medium text-gray-700 mb-2">Gambar (Opsional)</label><div class="mt-1 flex items-center"><div id="image-preview-container" class="w-32 h-32 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center"><img id="image-preview" src="" alt="Pratinjau" class="hidden max-w-full max-h-full"><span id="image-placeholder" class="text-gray-400 text-sm">Pilih Gambar</span></div><div class="ml-4"><input type="file" id="question-image-input" accept="image/*" class="hidden"><button type="button" id="upload-image-btn" class="bg-gray-200 text-gray-700 font-semibold px-4 py-2 rounded-lg">Pilih File</button><button type="button" id="remove-image-btn" class="hidden ml-2 bg-red-100 text-red-700 font-semibold px-4 py-2 rounded-lg">Hapus</button><p class="text-xs text-gray-500 mt-2">Maks. 5MB</p></div></div><div id="upload-status" class="text-sm mt-2"></div></div><div id="mc-fields"><div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4"><div><label class="block text-sm font-medium text-gray-700 mb-2">Pilihan A</label><input type="text" name="option_0" class="mc-option w-full px-4 py-2 border border-gray-300 rounded-lg"></div><div><label class="block text-sm font-medium text-gray-700 mb-2">Pilihan B</label><input type="text" name="option_1" class="mc-option w-full px-4 py-2 border border-gray-300 rounded-lg"></div><div><label class="block text-sm font-medium text-gray-700 mb-2">Pilihan C</label><input type="text" name="option_2" class="mc-option w-full px-4 py-2 border border-gray-300 rounded-lg"></div><div><label class="block text-sm font-medium text-gray-700 mb-2">Pilihan D</label><input type="text" name="option_3" class="mc-option w-full px-4 py-2 border border-gray-300 rounded-lg"></div></div><div class="mb-4"><label class="block text-sm font-medium text-gray-700 mb-2">Kunci Jawaban</label><div class="flex space-x-4"><label class="flex items-center"><input type="radio" name="correct_answer_index" value="0" class="mc-correct-answer mr-2"> A</label><label class="flex items-center"><input type="radio" name="correct_answer_index" value="1" class="mc-correct-answer mr-2"> B</label><label class="flex items-center"><input type="radio" name="correct_answer_index" value="2" class="mc-correct-answer mr-2"> C</label><label class="flex items-center"><input type="radio" name="correct_answer_index" value="3" class="mc-correct-answer mr-2"> D</label></div></div></div><div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6"><div><label for="topic" class="block text-sm font-medium text-gray-700 mb-2">Topik</label><input type="text" id="topic" name="topic" required class="w-full px-4 py-2 border border-gray-300 rounded-lg"></div><div><label for="difficulty" class="block text-sm font-medium text-gray-700 mb-2">Kesulitan</label><select id="difficulty" name="difficulty" class="w-full px-4 py-2 border border-gray-300 rounded-lg"><option value="low">Mudah</option><option value="medium" selected>Sedang</option><option value="high">Sulit</option></select></div><div><label for="competency" class="block text-sm font-medium text-gray-700 mb-2">Kompetensi</label><input type="text" id="competency" name="competency" class="w-full px-4 py-2 border border-gray-300 rounded-lg"></div></div></div><div><label class="block text-sm font-medium text-gray-700 mb-2">Pratinjau Soal</label><div id="question-preview-container" class="h-full border border-gray-200 rounded-lg p-4 bg-gray-50"><div id="preview-image-wrapper" class="mb-4 max-w-xs mx-auto hidden"><img id="preview-image" src="" alt="Pratinjau Gambar" class="w-full h-auto rounded-lg border"></div><div id="preview-text" class="prose"></div></div></div></div><div class="flex justify-end space-x-4 mt-8"><button type="button" id="question-modal-cancel" class="bg-gray-200 text-gray-700 font-semibold px-6 py-2 rounded-lg">Batal</button><button type="submit" class="bg-blue-600 text-white font-semibold px-6 py-2 rounded-lg">Simpan</button></div></form></div></div>
+        <div id="schedule-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 overflow-y-auto p-4"><div class="bg-white rounded-lg shadow-xl p-8 max-w-xl w-full my-8"><h3 class="text-2xl font-bold mb-6" id="schedule-modal-title">Buat Jadwal Baru</h3><form id="schedule-form"><input type="hidden" id="schedule-id" name="id"><div class="space-y-4"><div><label for="schedule_title" class="block text-sm font-medium text-gray-700 mb-2">Judul Jadwal</label><input type="text" id="schedule_title" name="title" required class="w-full px-4 py-2 border border-gray-300 rounded-lg"></div><div><label for="schedule_question_set" class="block text-sm font-medium text-gray-700 mb-2">Pilih Paket Soal</label><select id="schedule_question_set" name="question_set_id" required class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white"></select></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label for="schedule_duration" class="block text-sm font-medium text-gray-700 mb-2">Durasi (Menit)</label><input type="number" id="schedule_duration" name="duration_minutes" required class="w-full px-4 py-2 border border-gray-300 rounded-lg"></div><div><label for="schedule_max_attempts" class="block text-sm font-medium text-gray-700 mb-2">Maksimal Percobaan</label><input type="number" id="schedule_max_attempts" name="max_attempts" required value="1" min="1" class="w-full px-4 py-2 border border-gray-300 rounded-lg"></div></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label for="schedule_start_time" class="block text-sm font-medium text-gray-700 mb-2">Waktu Mulai</label><input type="datetime-local" id="schedule_start_time" name="start_time" required class="w-full px-4 py-2 border border-gray-300 rounded-lg"></div><div><label for="schedule_end_time" class="block text-sm font-medium text-gray-700 mb-2">Waktu Selesai</label><input type="datetime-local" id="schedule_end_time" name="end_time" required class="w-full px-4 py-2 border border-gray-300 rounded-lg"></div></div></div><div class="flex justify-end space-x-4 mt-8"><button type="button" id="schedule-modal-cancel" class="bg-gray-200 text-gray-700 font-semibold px-6 py-2 rounded-lg">Batal</button><button type="submit" class="bg-blue-600 text-white font-semibold px-6 py-2 rounded-lg">Simpan Jadwal</button></div></form></div></div>
+        <div id="question-set-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 overflow-y-auto p-4"><div class="bg-white rounded-lg shadow-xl p-8 max-w-3xl w-full my-8"><h3 class="text-2xl font-bold mb-6" id="question-set-modal-title">Buat Paket Soal Baru</h3><form id="question-set-form"><input type="hidden" id="question-set-id" name="id"><div class="mb-4"><label for="question_set_name" class="block text-sm font-medium text-gray-700 mb-2">Nama Paket</label><input type="text" id="question_set_name" name="name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg"></div><div class="mb-6"><label for="question_set_description" class="block text-sm font-medium text-gray-700 mb-2">Deskripsi</label><textarea id="question_set_description" name="description" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg"></textarea></div><div><label class="block text-sm font-medium text-gray-700 mb-2">Pilih Soal untuk Paket Ini (Hanya soal yang sudah disetujui)</label><div id="set-questions-list" class="h-64 border border-gray-300 rounded-lg p-4 overflow-y-auto bg-gray-50"></div></div><div class="flex justify-end space-x-4 mt-8"><button type="button" id="question-set-modal-cancel" class="bg-gray-200 text-gray-700 font-semibold px-6 py-2 rounded-lg">Batal</button><button type="submit" class="bg-blue-600 text-white font-semibold px-6 py-2 rounded-lg">Simpan Paket Soal</button></div></form></div></div>
+        <div id="analysis-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 overflow-y-auto p-4"><div class="bg-white rounded-lg shadow-xl p-8 max-w-5xl w-full my-8"><div class="flex justify-between items-center mb-6"><h3 class="text-2xl font-bold">Hasil Analisis Butir Soal</h3><button id="analysis-modal-close-btn" class="text-gray-500 hover:text-gray-800">&times;</button></div><div id="analysis-results-container" class="h-96 overflow-y-auto"></div></div></div>
+        <div id="result-details-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 overflow-y-auto p-4"><div class="bg-white rounded-lg shadow-xl p-8 max-w-3xl w-full my-8"><div class="flex justify-between items-center mb-6"><h3 class="text-2xl font-bold" id="result-details-title">Detail Hasil Ujian</h3><button id="result-details-close-btn" class="text-gray-500 hover:text-gray-800">&times;</button></div><div id="result-details-content"></div><div class="mt-6 border-t pt-4 flex justify-end"><button id="view-forensics-btn" class="bg-gray-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-gray-700">Lihat Timeline Forensik</button></div></div></div>
+        <div id="forensics-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 overflow-y-auto p-4"><div class="bg-white rounded-lg shadow-xl p-8 max-w-4xl w-full my-8"><div class="flex justify-between items-center mb-6"><h3 class="text-2xl font-bold">Timeline Aktivitas Peserta</h3><button id="forensics-close-btn" class="text-gray-500 hover:text-gray-800">&times;</button></div><div id="forensics-timeline-container" class="h-96 overflow-y-auto border p-4 rounded-lg bg-gray-50"></div></div></div>
+        <div id="user-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50"><div class="bg-white rounded-lg shadow-xl p-8 max-w-md w-full"><h3 class="text-2xl font-bold mb-6" id="user-modal-title">Tambah Peserta Baru</h3><form id="user-form"><div class="mb-4"><label for="user_username" class="block text-sm font-medium text-gray-700 mb-2">Username</label><input type="text" id="user_username" name="username" required class="w-full px-4 py-2 border border-gray-300 rounded-lg"></div><div class="mb-4"><label for="user_name" class="block text-sm font-medium text-gray-700 mb-2">Nama Lengkap</label><input type="text" id="user_name" name="name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg"></div><div class="mb-6"><label for="user_email" class="block text-sm font-medium text-gray-700 mb-2">Email (Opsional)</label><input type="email" id="user_email" name="email" class="w-full px-4 py-2 border border-gray-300 rounded-lg"></div><div class="flex justify-end space-x-4"><button type="button" id="user-modal-cancel" class="bg-gray-200 text-gray-700 font-semibold px-6 py-2 rounded-lg">Batal</button><button type="submit" class="bg-blue-600 text-white font-semibold px-6 py-2 rounded-lg">Simpan</button></div></form></div></div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/notifications.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/exam.js"></script>
+    <script src="js/admin.js"></script>
+    <script src="js/bank-soal.js"></script>
+    <script src="js/grading.js"></script>
+    <script src="js/user-management.js"></script>
+    <script src="js/monitoring.js"></script>
+    <script src="js/schedules.js"></script>
+    <script src="js/question-sets.js"></script>
+    <script src="js/audit-trail.js"></script>
+    <script src="js/profile.js"></script>
+    <script src="js/anti-cheat.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
